@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE CONDITIONS — 整える者たち</title>
+  <style>
+    :root {
+      --bg: #f2efe8;
+      --text: #2c2a28;
+      --muted: #928e86;
+      --green: #4e7250;
+      --green-light: #6a9060;
+      --border: rgba(44,42,40,0.1);
+      --accent-line: rgba(44,42,40,0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Georgia', serif;
+      overflow-x: hidden;
+    }
+
+    /* ── PROGRESS ── */
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 1px;
+      background: var(--green);
+      z-index: 100;
+      transition: width 0.1s linear;
+    }
+
+    /* ── PARTICLES ── */
+    #particle-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 2.5rem;
+      mix-blend-mode: multiply;
+    }
+
+    .nav-logo {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: var(--text);
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeIn 1s ease 0.5s forwards;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      opacity: 0;
+      animation: fadeIn 1s ease 0.7s forwards;
+    }
+
+    .nav-links a {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem 4rem;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.28em;
+      color: var(--green);
+      text-transform: uppercase;
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeIn 1s ease 0.6s forwards;
+    }
+
+    .hero-logo {
+      width: min(540px, 88vw);
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 1.2s cubic-bezier(0.16,1,0.3,1) 0.4s forwards;
+    }
+
+    .hero-logo svg { width: 100%; height: auto; }
+
+    .hero-title-ja {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      letter-spacing: 0.18em;
+      color: var(--text);
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeUp 1s ease 0.9s forwards;
+    }
+
+    .hero-sub {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: clamp(0.62rem, 1.5vw, 0.72rem);
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 1s ease 1.1s forwards;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      opacity: 0;
+      animation: fadeIn 1s ease 1.8s forwards;
+    }
+
+    .scroll-hint span {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 44px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      animation: scrollPulse 2.2s ease-in-out infinite;
+    }
+
+    /* ── SECTION COMMON ── */
+    .section-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: clamp(5rem, 10vw, 9rem) clamp(1.5rem, 6vw, 3rem);
+    }
+
+    .section-inner.wide {
+      max-width: 860px;
+    }
+
+    .sep {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    .label {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.32em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 3rem;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .label.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── POEM ── */
+    .poem-line {
+      font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+      line-height: 2.1;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.85s ease, transform 0.85s ease;
+    }
+
+    .poem-line.visible { opacity: 1; transform: translateY(0); }
+
+    .poem-line.indent {
+      padding-left: 1.5rem;
+      color: var(--green-light);
+      font-size: clamp(1rem, 2.4vw, 1.25rem);
+    }
+
+    .poem-line.dim {
+      color: var(--muted);
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+    }
+
+    .poem-gap { height: 2.5rem; }
+
+    /* ── QUOTE BLOCK ── */
+    .quote-block {
+      padding: 1.8rem 2rem;
+      border-left: 1.5px solid var(--green);
+      margin: 3.5rem 0;
+      opacity: 0;
+      transform: translateX(-16px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+
+    .quote-block.visible { opacity: 1; transform: translateX(0); }
+
+    .quote-block p {
+      font-size: clamp(1.05rem, 3vw, 1.45rem);
+      line-height: 2;
+      color: var(--text);
+    }
+
+    .quote-block p em {
+      font-style: normal;
+      color: var(--green-light);
+    }
+
+    /* ── CONCEPT ── */
+    .concept-big {
+      font-size: clamp(1.3rem, 3.5vw, 2rem);
+      line-height: 1.9;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .concept-big.visible { opacity: 1; transform: translateY(0); }
+
+    .concept-note {
+      margin-top: 2.5rem;
+      font-size: clamp(0.9rem, 2.2vw, 1.1rem);
+      line-height: 2.1;
+      color: var(--muted);
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.9s ease 0.2s, transform 0.9s ease 0.2s;
+    }
+
+    .concept-note.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── CAST ── */
+    .section-heading {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      letter-spacing: 0.04em;
+      color: var(--text);
+      margin-bottom: 3rem;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .section-heading.visible { opacity: 1; transform: translateY(0); }
+
+    .cast-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border);
+    }
+
+    .cast-item {
+      padding: 1.4rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.65s ease, transform 0.65s ease, background 0.25s;
+    }
+
+    .cast-item:nth-child(even) { border-right: none; }
+
+    .cast-item:hover { background: rgba(78,114,80,0.04); }
+
+    .cast-item.visible { opacity: 1; transform: translateY(0); }
+
+    .cast-name {
+      font-size: 0.95rem;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+      line-height: 1.5;
+    }
+
+    .cast-role {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    /* ── PRODUCTION ── */
+    .prod-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 1rem;
+      padding: 1.4rem 0;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .prod-row:first-of-type { border-top: 1px solid var(--border); }
+
+    .prod-row.visible { opacity: 1; transform: translateY(0); }
+
+    .prod-role {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding-top: 0.1rem;
+    }
+
+    .prod-name {
+      font-size: 0.95rem;
+      line-height: 1.9;
+      color: var(--text);
+    }
+
+    .prod-name small {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── CLOSING ── */
+    .closing-text {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      line-height: 2.4;
+      color: var(--muted);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1.1s ease, transform 1.1s ease;
+    }
+
+    .closing-text.visible { opacity: 1; transform: translateY(0); }
+
+    .closing-text em {
+      font-style: normal;
+      color: var(--text);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 3rem 2rem 4rem;
+      border-top: 1px solid var(--border);
+    }
+
+    footer p {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      line-height: 2.2;
+    }
+
+    /* ── KEYFRAMES ── */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 1; transform: scaleY(1); }
+      50%       { opacity: 0.35; transform: scaleY(0.55); }
+    }
+
+    /* SVG draw animation */
+    .svg-draw path,
+    .svg-draw line,
+    .svg-draw circle,
+    .svg-draw ellipse {
+      stroke-dasharray: 800;
+      stroke-dashoffset: 800;
+      animation: drawStroke 3.5s ease forwards;
+    }
+
+    @keyframes drawStroke {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 600px) {
+      nav { padding: 1.2rem 1.4rem; }
+      .nav-links { display: none; }
+
+      #hero { padding: 5rem 1.4rem 3.5rem; }
+
+      .section-inner { padding: 3.5rem 1.4rem; }
+
+      .poem-line { font-size: 1rem; line-height: 2; }
+      .poem-line.indent { font-size: 0.95rem; padding-left: 1rem; }
+      .poem-line.dim { font-size: 0.88rem; }
+
+      .quote-block { padding: 1.2rem 1.2rem; margin: 2.5rem 0; }
+      .quote-block p { font-size: 1rem; }
+
+      .concept-big { font-size: 1.2rem; }
+
+      .cast-list { grid-template-columns: 1fr 1fr; }
+      .cast-item { padding: 1rem 0.8rem; }
+      .cast-name { font-size: 0.85rem; }
+
+      .prod-row { grid-template-columns: 90px 1fr; gap: 0.6rem; }
+      .prod-name { font-size: 0.9rem; }
+
+      .closing-text { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+<canvas id="particle-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">The Conditions</span>
+  <ul class="nav-links">
+    <li><a href="#story">Story</a></li>
+    <li><a href="#cast">Cast</a></li>
+    <li><a href="#production">Production</a></li>
+  </ul>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <p class="hero-eyebrow">Edible Tokyo Rally — Community Film Project</p>
+
+  <div class="hero-logo">
+    <svg viewBox="0 0 540 190" xmlns="http://www.w3.org/2000/svg" class="svg-draw">
+      <g fill="none" stroke="#2c2a28" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Stem 1 -->
+        <line x1="46" y1="112" x2="46" y2="58"/>
+        <line x1="46" y1="86" x2="35" y2="72"/>
+        <line x1="46" y1="75" x2="57" y2="63"/>
+        <!-- Dandelion -->
+        <line x1="102" y1="112" x2="102" y2="48"/>
+        <circle cx="102" cy="42" r="5.5" stroke-width="0.9"/>
+        <line x1="102" y1="42" x2="93" y2="33"/>
+        <line x1="102" y1="42" x2="111" y2="33"/>
+        <line x1="102" y1="42" x2="98" y2="31"/>
+        <line x1="102" y1="42" x2="106" y2="31"/>
+        <line x1="102" y1="82" x2="90" y2="70"/>
+        <line x1="102" y1="72" x2="113" y2="62"/>
+        <!-- Sunflower -->
+        <line x1="186" y1="112" x2="186" y2="30"/>
+        <circle cx="186" cy="25" r="9" stroke-width="1.1"/>
+        <line x1="186" y1="14" x2="186" y2="9"/>
+        <line x1="196" y1="17" x2="200" y2="12"/>
+        <line x1="198" y1="25" x2="203" y2="25"/>
+        <line x1="196" y1="33" x2="200" y2="37"/>
+        <line x1="186" y1="36" x2="186" y2="41"/>
+        <line x1="176" y1="33" x2="172" y2="37"/>
+        <line x1="174" y1="25" x2="169" y2="25"/>
+        <line x1="176" y1="17" x2="172" y2="12"/>
+        <line x1="186" y1="65" x2="173" y2="52"/>
+        <line x1="186" y1="79" x2="198" y2="67"/>
+        <!-- Mushroom -->
+        <path d="M252 112 Q252 90 257 83 Q264 73 272 73 Q280 73 287 83 Q292 90 292 112"/>
+        <path d="M255 86 Q263 80 272 80 Q281 80 289 86"/>
+        <line x1="272" y1="112" x2="272" y2="80"/>
+        <!-- Clover -->
+        <line x1="338" y1="112" x2="338" y2="58"/>
+        <circle cx="338" cy="51" r="6.5"/>
+        <circle cx="330" cy="56" r="5.5"/>
+        <circle cx="346" cy="56" r="5.5"/>
+        <line x1="338" y1="88" x2="327" y2="75"/>
+        <!-- Slim plant -->
+        <line x1="402" y1="112" x2="402" y2="40"/>
+        <line x1="402" y1="40" x2="393" y2="28"/>
+        <line x1="402" y1="40" x2="411" y2="28"/>
+        <path d="M393 28 Q402 21 411 28" fill="none"/>
+        <line x1="402" y1="78" x2="390" y2="66"/>
+        <line x1="402" y1="93" x2="414" y2="83"/>
+        <!-- Simple flower -->
+        <line x1="468" y1="112" x2="468" y2="52"/>
+        <circle cx="468" cy="46" r="7.5"/>
+        <line x1="468" y1="36" x2="468" y2="32"/>
+        <line x1="476" y1="38" x2="479" y2="34"/>
+        <line x1="478" y1="46" x2="482" y2="46"/>
+        <line x1="476" y1="54" x2="479" y2="58"/>
+        <line x1="468" y1="56" x2="468" y2="60"/>
+        <line x1="460" y1="54" x2="457" y2="58"/>
+        <line x1="458" y1="46" x2="454" y2="46"/>
+        <line x1="460" y1="38" x2="457" y2="34"/>
+      </g>
+      <text x="270" y="162" text-anchor="middle"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-weight="900" font-size="48" letter-spacing="3"
+        fill="#2c2a28">THE CONDITIONS</text>
+    </svg>
+  </div>
+
+  <h1 class="hero-title-ja">整える者たち</h1>
+  <p class="hero-sub">— Edible Tokyo Rally から生まれるコミュニティフィルムプロジェクト —</p>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ══ STORY ══ -->
+<div class="sep"></div>
+<section id="story">
+  <div class="section-inner">
+    <p class="label">Story</p>
+
+    <p class="poem-line">地球は、46億年かけて</p>
+    <p class="poem-line">無数の生命が関わり合う「循環」という奇跡を編み続けてきた。</p>
+
+    <div class="poem-gap"></div>
+
+    <p class="poem-line indent">土が生まれ、</p>
+    <p class="poem-line indent">森が育ち、</p>
+    <p class="poem-line indent">水が流れ、</p>
+    <p class="poem-line indent">ひとつの命が、次の命へ受け渡されていく。</p>
+
+    <div class="poem-gap"></div>
+
+    <p class="poem-line">その循環を支えてきたのは、</p>
+    <p class="poem-line">目には見えないほど小さな存在たちだった。</p>
+
+    <div class="poem-gap"></div>
+
+    <p class="poem-line dim">分解し、混ざり合い、つなぎ直す。</p>
+    <p class="poem-line dim">誰にも知られない場所で、</p>
+    <p class="poem-line dim">世界を支え続けてきたものたち。</p>
+
+    <div class="quote-block">
+      <p>けれど今、その循環は静かに失われ始めている。<br>
+      土は痩せ、水は濁り、<br>都市は生命の感覚を遠ざけていく。</p>
+    </div>
+
+    <p class="poem-line">それでも、世界の各地で、</p>
+    <p class="poem-line">もう一度その循環に触れようとしている人たちがいる。</p>
+
+    <div class="poem-gap"></div>
+
+    <p class="poem-line indent">土を育てる人。</p>
+    <p class="poem-line indent">食べものを育てる人。</p>
+    <p class="poem-line indent">微生物の声に耳を澄ます人。</p>
+    <p class="poem-line indent">都市の片隅で、小さな循環を取り戻そうとする人。</p>
+
+    <div class="poem-gap"></div>
+
+    <p class="poem-line dim">彼らがやっていることは、決して大きな革命ではない。</p>
+
+    <div class="poem-gap"></div>
+
+    <p class="poem-line">けれど、森が一本の菌糸から広がるように、</p>
+    <p class="poem-line">小さな実践は、静かに世界を書き換えていく。</p>
+  </div>
+</section>
+
+<!-- ══ CONCEPT ══ -->
+<div class="sep"></div>
+<section id="concept">
+  <div class="section-inner">
+    <p class="label">Concept</p>
+
+    <p class="concept-big">
+      『THE CONDITIONS』は、<br>未来を予言する映画ではない。
+    </p>
+
+    <p class="concept-note">
+      あなたの中に残っていた<br>
+      <em>"循環の感覚"</em>をそっと呼び起こすためのフィルムだ。<br><br>
+      土は、まだ覚えている。<br>
+      人間が、循環の一部だった頃のことを。
+    </p>
+  </div>
+</section>
+
+<!-- ══ CAST ══ -->
+<div class="sep"></div>
+<section id="cast">
+  <div class="section-inner wide">
+    <p class="label">The Conditions</p>
+    <h2 class="section-heading">登場する人たち</h2>
+
+    <div class="cast-list">
+      <div class="cast-item">
+        <p class="cast-name">Phil Cashman</p>
+        <p class="cast-role">Permaculture AWA</p>
+      </div>
+      <div class="cast-item">
+        <p class="cast-name">堀口 博子</p>
+        <p class="cast-role">Edible School Yard Japan</p>
+      </div>
+      <div class="cast-item">
+        <p class="cast-name">明石 修</p>
+        <p class="cast-role">武蔵野大学 准教授</p>
+      </div>
+      <div class="cast-item">
+        <p class="cast-name">鈴木 茉央</p>
+        <p class="cast-role">武蔵野大学 准教授</p>
+      </div>
+      <div class="cast-item">
+        <p class="cast-name">平希井</p>
+        <p class="cast-role">LFC コンポスト</p>
+      </div>
+      <div class="cast-item">
+        <p class="cast-name">小田 文哉</p>
+        <p class="cast-role">&nbsp;</p>
+      </div>
+      <div class="cast-item">
+        <p class="cast-name">高取 美央</p>
+        <p class="cast-role">Edible Tokyo Rally 運営事務局</p>
+      </div>
+      <div class="cast-item" style="opacity:0.45;">
+        <p class="cast-name">etc.</p>
+        <p class="cast-role">順次追加</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRODUCTION ══ -->
+<div class="sep"></div>
+<section id="production">
+  <div class="section-inner">
+    <p class="label">Production</p>
+
+    <div class="prod-row">
+      <span class="prod-role">監督</span>
+      <span class="prod-name">川村 剛弘</span>
+    </div>
+    <div class="prod-row">
+      <span class="prod-role">撮影・編集</span>
+      <span class="prod-name">
+        川村 剛弘 <small>(CreativeEyes inc.)</small><br>
+        室井 翼 <small>(CreativeEyes inc.)</small><br>
+        遠藤 祐亮
+      </span>
+    </div>
+    <div class="prod-row">
+      <span class="prod-role">Sound Design</span>
+      <span class="prod-name">遠藤 晶美 <small>(Scirent Stone)</small></span>
+    </div>
+    <div class="prod-row">
+      <span class="prod-role">主題歌</span>
+      <span class="prod-name">YUINO</span>
+    </div>
+    <div class="prod-row">
+      <span class="prod-role">主催</span>
+      <span class="prod-name">Edible Tokyo Rally</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MESSAGE ══ -->
+<div class="sep"></div>
+<section id="message">
+  <div class="section-inner" style="padding-bottom: 7rem;">
+    <p class="label">Message</p>
+    <p class="closing-text">
+      土を育てること。食べものを育てること。<br>
+      それは小さな行為に見えて、<br>
+      <em>地球が46億年かけて紡いできた循環の、続きを生きること</em>だ。<br><br>
+      あなたはすでに、その一部だ。
+    </p>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <p>THE CONDITIONS — 整える者たち</p>
+  <p>Edible Tokyo Rally コミュニティフィルムプロジェクト</p>
+  <p style="margin-top:0.8rem; font-size:0.58rem;">
+    監督 川村剛弘　主題歌 YUINO　Sound Design 遠藤晶美　協力 THE CONDITIONS 制作チーム
+  </p>
+</footer>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+  });
+
+  // Intersection Observer
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      setTimeout(() => el.classList.add('visible'), +(el.dataset.delay || 0));
+      observer.unobserve(el);
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.poem-line').forEach((el, i) => {
+    el.dataset.delay = i * 70;
+    observer.observe(el);
+  });
+
+  document.querySelectorAll('.label, .quote-block, .concept-big, .concept-note, .section-heading, .closing-text').forEach(el => observer.observe(el));
+
+  document.querySelectorAll('.cast-item').forEach((el, i) => {
+    el.dataset.delay = i * 60;
+    observer.observe(el);
+  });
+
+  document.querySelectorAll('.prod-row').forEach((el, i) => {
+    el.dataset.delay = i * 80;
+    observer.observe(el);
+  });
+
+  // Particles
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function makeParticles() {
+    return Array.from({ length: 55 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.4 + 0.4,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: -Math.random() * 0.35 - 0.08,
+      op: Math.random() * 0.35 + 0.05,
+      drift: Math.random() * Math.PI * 2,
+      ds: Math.random() * 0.008 + 0.003,
+    }));
+  }
+
+  resize();
+  particles = makeParticles();
+  window.addEventListener('resize', () => { resize(); particles = makeParticles(); });
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.drift += p.ds;
+      p.x += p.vx + Math.sin(p.drift) * 0.25;
+      p.y += p.vy;
+      if (p.y < -8) { p.y = H + 8; p.x = Math.random() * W; }
+      if (p.x < -8) p.x = W + 8;
+      if (p.x > W + 8) p.x = -8;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(78, 114, 80, ${p.op})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+</script>
+</body>
+</html>
